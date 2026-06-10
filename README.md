@@ -120,3 +120,4 @@ MotorPump1/
 ├── static/                      ← app.js, style.css, socket.io.min.js
 └── templates/index.html         ← dashboard UI
 ```
+# redeploy
