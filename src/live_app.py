@@ -67,7 +67,7 @@ app = Flask(__name__,
             template_folder=os.path.join(_ROOT, "templates"),
             static_folder=os.path.join(_ROOT, "static"))
 app.config["SECRET_KEY"] = "motor-pump-phase1"
-socketio = SocketIO(app, async_mode="threading", cors_allowed_origins="*")
+socketio = SocketIO(app, async_mode="gevent", cors_allowed_origins="*")
 
 
 # ---------------------------------------------------------------------------

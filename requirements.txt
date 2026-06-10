@@ -11,4 +11,5 @@ matplotlib>=3.7
 flask>=3.0
 flask-socketio>=5.3
 simple-websocket>=1.0
-sounddevice>=0.4.6
+sounddevice>=0.4.6gevent>=23.0
+gevent-websocket>=0.10
