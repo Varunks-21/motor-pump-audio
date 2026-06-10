@@ -388,6 +388,71 @@ def on_stop(data=None):  # noqa: ARG001
 if __name__ == "__main__":
     init_db()
     load_models()
-    print("Open http://127.0.0.1:5000 in your browser.")
-    socketio.run(app, host="127.0.0.1", port=5000,
+    port = int(os.environ.get("PORT", 5000))
+    print(f"Open http://0.0.0.0:{port} in your browser.")
+    socketio.run(app, host="0.0.0.0", port=port,
                  debug=False, allow_unsafe_werkzeug=True)
+
+
+# ---------------------------------------------------------------------------
+# CLOUD API — POST /predict
+# ---------------------------------------------------------------------------
+# Accepts a WAV file from any remote device and returns the fault prediction.
+# The remote device sends:
+#   curl -X POST http://<your-railway-url>/predict -F "audio=@chunk.wav"
+# Response JSON:
+#   {"predicted_class": "bearing_fault", "confidence": 0.87,
+#    "status": "red", "anomaly": true, "ae_score": 0.031}
+# ---------------------------------------------------------------------------
+@app.route("/predict", methods=["POST"])
+def predict_api():
+    if not S.models_ready:
+        return jsonify({"error": "Models not loaded"}), 503
+
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file. Send as multipart field 'audio'"}), 400
+
+    import tempfile, soundfile as sf
+
+    f = request.files["audio"]
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        tmp_path = tmp.name
+        f.save(tmp_path)
+
+    try:
+        wav, sr = sf.read(tmp_path, dtype="float32")
+        if wav.ndim > 1:
+            wav = wav[:, 0]                          # stereo → mono
+        if sr != config.SAMPLE_RATE:
+            import librosa
+            wav = librosa.resample(wav, orig_sr=sr, target_sr=config.SAMPLE_RATE)
+
+        need = int(WINDOW_SEC * config.SAMPLE_RATE)
+        if len(wav) < need:
+            # pad if clip is shorter than WINDOW_SEC
+            wav = np.pad(wav, (0, need - len(wav)))
+        win = wav[-need:]                            # take last WINDOW_SEC seconds
+
+        payload = process_window(win)
+        os.unlink(tmp_path)
+
+        # Save to DB + push to all open browser dashboards in real time
+        db_insert(payload)
+        socketio.emit("prediction", payload)
+
+        # Return only the fields relevant to the API caller
+        return jsonify({
+            "predicted_class": payload["predicted_class"],
+            "confidence":       payload["confidence"],
+            "status":           payload["status"],
+            "anomaly":          payload["anomaly"],
+            "ae_score":         payload["ae_score"],
+            "ae_threshold":     payload["ae_threshold"],
+            "ts":               payload["ts"],
+        })
+    except Exception as e:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        return jsonify({"error": str(e)}), 500
