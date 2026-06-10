@@ -1,0 +1,78 @@
+{
+  "filename": "mix_007.wav",
+  "duration": 10.0,
+  "predicted_events": [
+    {
+      "event_class": "pipe_leak",
+      "start_time": 0.0,
+      "end_time": 4.994
+    },
+    {
+      "event_class": "motor_off",
+      "start_time": 5.001,
+      "end_time": 5.998
+    },
+    {
+      "event_class": "impeller_damage",
+      "start_time": 6.001,
+      "end_time": 8.0
+    },
+    {
+      "event_class": "normal",
+      "start_time": 8.0,
+      "end_time": 10.0
+    }
+  ],
+  "dominant_timeline": [
+    {
+      "event_class": "pipe_leak",
+      "start_time": 0.0,
+      "end_time": 5.0
+    },
+    {
+      "event_class": "motor_off",
+      "start_time": 5.0,
+      "end_time": 6.0
+    },
+    {
+      "event_class": "impeller_damage",
+      "start_time": 6.0,
+      "end_time": 8.0
+    },
+    {
+      "event_class": "normal",
+      "start_time": 8.0,
+      "end_time": 10.0
+    }
+  ],
+  "ae_score": 0.338569,
+  "ae_threshold": 0.12608,
+  "ae_flag": true,
+  "ground_truth": [
+    {
+      "event_class": "pipe_leak",
+      "start_time": 0.0,
+      "end_time": 4.5
+    },
+    {
+      "event_class": "motor_off",
+      "start_time": 4.5,
+      "end_time": 6.1
+    },
+    {
+      "event_class": "impeller_damage",
+      "start_time": 6.1,
+      "end_time": 7.9
+    },
+    {
+      "event_class": "normal",
+      "start_time": 7.9,
+      "end_time": 10.0
+    }
+  ],
+  "metrics": {
+    "frame_accuracy": 0.93,
+    "anomaly_accuracy": 0.93,
+    "n_points": 100
+  }
+}

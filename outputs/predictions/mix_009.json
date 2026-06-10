@@ -1,0 +1,93 @@
+{
+  "filename": "mix_009.wav",
+  "duration": 10.0,
+  "predicted_events": [
+    {
+      "event_class": "motor_off",
+      "start_time": 0.001,
+      "end_time": 1.5
+    },
+    {
+      "event_class": "cavitation",
+      "start_time": 1.501,
+      "end_time": 4.0
+    },
+    {
+      "event_class": "motor_off",
+      "start_time": 4.006,
+      "end_time": 5.498
+    },
+    {
+      "event_class": "impeller_damage",
+      "start_time": 5.505,
+      "end_time": 7.999
+    },
+    {
+      "event_class": "bearing_fault",
+      "start_time": 8.0,
+      "end_time": 10.0
+    }
+  ],
+  "dominant_timeline": [
+    {
+      "event_class": "motor_off",
+      "start_time": 0.0,
+      "end_time": 1.5
+    },
+    {
+      "event_class": "cavitation",
+      "start_time": 1.5,
+      "end_time": 4.0
+    },
+    {
+      "event_class": "motor_off",
+      "start_time": 4.0,
+      "end_time": 5.5
+    },
+    {
+      "event_class": "impeller_damage",
+      "start_time": 5.5,
+      "end_time": 8.0
+    },
+    {
+      "event_class": "bearing_fault",
+      "start_time": 8.0,
+      "end_time": 10.0
+    }
+  ],
+  "ae_score": 0.110356,
+  "ae_threshold": 0.12608,
+  "ae_flag": false,
+  "ground_truth": [
+    {
+      "event_class": "motor_off",
+      "start_time": 0.0,
+      "end_time": 1.7
+    },
+    {
+      "event_class": "cavitation",
+      "start_time": 1.7,
+      "end_time": 3.9
+    },
+    {
+      "event_class": "motor_off",
+      "start_time": 3.9,
+      "end_time": 5.8
+    },
+    {
+      "event_class": "impeller_damage",
+      "start_time": 5.8,
+      "end_time": 7.8
+    },
+    {
+      "event_class": "bearing_fault",
+      "start_time": 7.8,
+      "end_time": 10.0
+    }
+  ],
+  "metrics": {
+    "frame_accuracy": 0.92,
+    "anomaly_accuracy": 0.94,
+    "n_points": 100
+  }
+}

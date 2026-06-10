@@ -1,0 +1,63 @@
+{
+  "filename": "mix_005.wav",
+  "duration": 10.0,
+  "predicted_events": [
+    {
+      "event_class": "normal",
+      "start_time": 0.0,
+      "end_time": 4.0
+    },
+    {
+      "event_class": "motor_overload",
+      "start_time": 4.0,
+      "end_time": 7.0
+    },
+    {
+      "event_class": "pipe_leak",
+      "start_time": 7.001,
+      "end_time": 10.0
+    }
+  ],
+  "dominant_timeline": [
+    {
+      "event_class": "normal",
+      "start_time": 0.0,
+      "end_time": 4.0
+    },
+    {
+      "event_class": "motor_overload",
+      "start_time": 4.0,
+      "end_time": 7.0
+    },
+    {
+      "event_class": "pipe_leak",
+      "start_time": 7.0,
+      "end_time": 10.0
+    }
+  ],
+  "ae_score": 0.276946,
+  "ae_threshold": 0.12608,
+  "ae_flag": true,
+  "ground_truth": [
+    {
+      "event_class": "normal",
+      "start_time": 0.0,
+      "end_time": 4.0
+    },
+    {
+      "event_class": "motor_overload",
+      "start_time": 4.0,
+      "end_time": 7.0
+    },
+    {
+      "event_class": "pipe_leak",
+      "start_time": 7.0,
+      "end_time": 10.0
+    }
+  ],
+  "metrics": {
+    "frame_accuracy": 1.0,
+    "anomaly_accuracy": 1.0,
+    "n_points": 100
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "filename": "mix_003.wav",
+  "duration": 10.0,
+  "predicted_events": [
+    {
+      "event_class": "normal",
+      "start_time": 0.001,
+      "end_time": 2.5
+    },
+    {
+      "event_class": "impeller_damage",
+      "start_time": 2.501,
+      "end_time": 5.5
+    },
+    {
+      "event_class": "normal",
+      "start_time": 5.501,
+      "end_time": 7.5
+    },
+    {
+      "event_class": "cavitation",
+      "start_time": 7.5,
+      "end_time": 10.0
+    }
+  ],
+  "dominant_timeline": [
+    {
+      "event_class": "normal",
+      "start_time": 0.0,
+      "end_time": 2.5
+    },
+    {
+      "event_class": "impeller_damage",
+      "start_time": 2.5,
+      "end_time": 5.5
+    },
+    {
+      "event_class": "normal",
+      "start_time": 5.5,
+      "end_time": 7.5
+    },
+    {
+      "event_class": "cavitation",
+      "start_time": 7.5,
+      "end_time": 10.0
+    }
+  ],
+  "ae_score": 0.121223,
+  "ae_threshold": 0.12608,
+  "ae_flag": false,
+  "ground_truth": [
+    {
+      "event_class": "normal",
+      "start_time": 0.0,
+      "end_time": 2.5
+    },
+    {
+      "event_class": "impeller_damage",
+      "start_time": 2.5,
+      "end_time": 5.5
+    },
+    {
+      "event_class": "normal",
+      "start_time": 5.5,
+      "end_time": 7.5
+    },
+    {
+      "event_class": "cavitation",
+      "start_time": 7.5,
+      "end_time": 10.0
+    }
+  ],
+  "metrics": {
+    "frame_accuracy": 1.0,
+    "anomaly_accuracy": 1.0,
+    "n_points": 100
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "classes": [
+    "motor_off",
+    "normal",
+    "bearing_fault",
+    "cavitation",
+    "impeller_damage",
+    "pipe_leak",
+    "motor_overload"
+  ],
+  "class_to_idx": {
+    "motor_off": 0,
+    "normal": 1,
+    "bearing_fault": 2,
+    "cavitation": 3,
+    "impeller_damage": 4,
+    "pipe_leak": 5,
+    "motor_overload": 6
+  },
+  "anomaly_classes": [
+    "bearing_fault",
+    "cavitation",
+    "impeller_damage",
+    "pipe_leak",
+    "motor_overload"
+  ],
+  "normal_classes": [
+    "normal"
+  ],
+  "neutral_classes": [
+    "motor_off"
+  ],
+  "class_colors": {
+    "motor_off": "#9e9e9e",
+    "normal": "#2e7d32",
+    "bearing_fault": "#c62828",
+    "cavitation": "#ad1457",
+    "impeller_damage": "#6a1b9a",
+    "pipe_leak": "#1565c0",
+    "motor_overload": "#e65100",
+    "unknown_sound": "#ff6f00"
+  }
+}

@@ -1,0 +1,5 @@
+filename,event_class,start_time,end_time
+mix_000.wav,normal,0.0,3.0
+mix_000.wav,cavitation,3.0,5.0
+mix_000.wav,motor_off,5.0,7.0
+mix_000.wav,bearing_fault,7.0,10.0

@@ -1,0 +1,13 @@
+filename,frame_accuracy,anomaly_accuracy,n_pred_events,n_gt_events,ae_score,ae_flag
+mix_000.wav,0.95,0.95,4,4,0.10301,False
+mix_001.wav,1.0,1.0,3,3,0.08448,False
+mix_002.wav,1.0,1.0,4,4,0.315656,True
+mix_003.wav,1.0,1.0,4,4,0.121223,False
+mix_004.wav,1.0,1.0,4,4,0.081018,False
+mix_005.wav,1.0,1.0,3,3,0.276946,True
+mix_006.wav,1.0,1.0,3,3,0.078574,False
+mix_007.wav,0.93,0.93,4,4,0.338569,True
+mix_008.wav,0.99,0.99,3,3,0.062714,False
+mix_009.wav,0.92,0.94,5,5,0.110356,False
+mix_010.wav,0.99,0.99,3,3,0.077504,False
+mix_011.wav,0.94,0.95,4,4,0.217361,True

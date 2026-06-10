@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MotorPump // Live Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <!-- Load the Socket.IO client locally first; fall back to the CDN if absent. -->
+  <script src="{{ url_for('static', filename='socket.io.min.js') }}" onerror="this.dataset.failed=1"></script>
+  <script>
+    if (typeof io === "undefined") {
+      document.write('<scr' + 'ipt src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"><\/scr' + 'ipt>');
+    }
+  </script>
+</head>
+<body>
+  <div class="grain"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">▣</span>
+      <div>
+        <div class="title">MOTORPUMP</div>
+        <div class="subtitle">// real-time acoustic monitor</div>
+      </div>
+    </div>
+    <div class="controls">
+      <span id="mic-pill" class="pill pill-off">● MIC OFFLINE</span>
+      <select id="device-select" class="device-select" title="Input device">
+        <option value="default">Default microphone</option>
+      </select>
+      <button id="toggle-btn" class="btn">START</button>
+    </div>
+  </header>
+
+  {% if not models_ready %}
+  <div class="warn-strip">⚠ Trained models not found. Run <code>python src/train.py</code>, then restart this app to enable detection.</div>
+  {% endif %}
+
+  <main class="layout">
+    <!-- HERO STATUS -->
+    <section class="card status-card" id="status-card" style="--status:#4b5563">
+      <div class="status-head">STATUS</div>
+      <div class="status-core">
+        <div class="ring" id="status-ring"><div class="ring-dot"></div></div>
+        <div class="status-text">
+          <div class="status-class" id="status-class">STANDBY</div>
+          <div class="status-label" id="status-label">awaiting input</div>
+        </div>
+      </div>
+      <div class="meter">
+        <div class="meter-row">
+          <span>CONFIDENCE</span><span id="conf-val">--</span>
+        </div>
+        <div class="bar"><div class="bar-fill" id="conf-bar"></div></div>
+      </div>
+      <div class="meter">
+        <div class="meter-row">
+          <span>ANOMALY SCORE</span><span id="ae-val">--</span>
+        </div>
+        <div class="bar"><div class="bar-fill ae" id="ae-bar"></div></div>
+      </div>
+      <div class="alarm" id="alarm">⚠ ANOMALY DETECTED</div>
+    </section>
+
+    <!-- SPECTROGRAM -->
+    <section class="card spec-card">
+      <div class="card-head">LIVE MEL SPECTROGRAM</div>
+      <div class="spec-frame">
+        <img id="spectrogram" alt="live spectrogram" style="display:none" />
+        <div class="spec-empty" id="spec-empty">no signal</div>
+        <div class="scanlines"></div>
+      </div>
+    </section>
+
+    <!-- RECENT -->
+    <section class="card recent-card">
+      <div class="card-head">RECENT PREDICTIONS</div>
+      <ul class="recent-list" id="recent-list"></ul>
+    </section>
+  </main>
+
+  <!-- HISTORY SEARCH -->
+  <section class="card history-card">
+    <div class="card-head">HISTORY SEARCH</div>
+    <div class="search-row">
+      <label>FROM <input type="datetime-local" id="search-from" /></label>
+      <label>TO <input type="datetime-local" id="search-to" /></label>
+      <button id="search-btn" class="btn btn-ghost">SEARCH</button>
+      <span class="search-summary" id="search-summary"></span>
+    </div>
+    <div class="table-wrap">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>TIME</th><th>CLASS</th><th>CONF</th><th>STATUS</th>
+            <th>ANOMALY</th><th>AE</th><th>WINDOW</th><th>DUR</th>
+          </tr>
+        </thead>
+        <tbody id="history-body">
+          <tr><td colspan="8" class="empty-row">Pick a time range and search the prediction log.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

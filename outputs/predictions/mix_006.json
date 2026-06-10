@@ -1,0 +1,63 @@
+{
+  "filename": "mix_006.wav",
+  "duration": 10.0,
+  "predicted_events": [
+    {
+      "event_class": "impeller_damage",
+      "start_time": 0.0,
+      "end_time": 2.5
+    },
+    {
+      "event_class": "bearing_fault",
+      "start_time": 2.501,
+      "end_time": 6.0
+    },
+    {
+      "event_class": "normal",
+      "start_time": 6.0,
+      "end_time": 10.0
+    }
+  ],
+  "dominant_timeline": [
+    {
+      "event_class": "impeller_damage",
+      "start_time": 0.0,
+      "end_time": 2.5
+    },
+    {
+      "event_class": "bearing_fault",
+      "start_time": 2.5,
+      "end_time": 6.0
+    },
+    {
+      "event_class": "normal",
+      "start_time": 6.0,
+      "end_time": 10.0
+    }
+  ],
+  "ae_score": 0.078574,
+  "ae_threshold": 0.12608,
+  "ae_flag": false,
+  "ground_truth": [
+    {
+      "event_class": "impeller_damage",
+      "start_time": 0.0,
+      "end_time": 2.5
+    },
+    {
+      "event_class": "bearing_fault",
+      "start_time": 2.5,
+      "end_time": 6.0
+    },
+    {
+      "event_class": "normal",
+      "start_time": 6.0,
+      "end_time": 10.0
+    }
+  ],
+  "metrics": {
+    "frame_accuracy": 1.0,
+    "anomaly_accuracy": 1.0,
+    "n_points": 100
+  }
+}

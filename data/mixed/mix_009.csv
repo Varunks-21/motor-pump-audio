@@ -1,0 +1,6 @@
+filename,event_class,start_time,end_time
+mix_009.wav,motor_off,0.0,1.7
+mix_009.wav,cavitation,1.7,3.9
+mix_009.wav,motor_off,3.9,5.8
+mix_009.wav,impeller_damage,5.8,7.8
+mix_009.wav,bearing_fault,7.8,10.0

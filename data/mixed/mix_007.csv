@@ -1,0 +1,5 @@
+filename,event_class,start_time,end_time
+mix_007.wav,pipe_leak,0.0,4.5
+mix_007.wav,motor_off,4.5,6.1
+mix_007.wav,impeller_damage,6.1,7.9
+mix_007.wav,normal,7.9,10.0

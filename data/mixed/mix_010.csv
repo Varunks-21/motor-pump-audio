@@ -1,0 +1,4 @@
+filename,event_class,start_time,end_time
+mix_010.wav,normal,0.0,1.6
+mix_010.wav,motor_overload,1.6,6.0
+mix_010.wav,normal,6.0,10.0

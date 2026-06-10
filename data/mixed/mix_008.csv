@@ -1,0 +1,4 @@
+filename,event_class,start_time,end_time
+mix_008.wav,normal,0.0,4.6
+mix_008.wav,impeller_damage,4.6,7.0
+mix_008.wav,bearing_fault,7.0,10.0

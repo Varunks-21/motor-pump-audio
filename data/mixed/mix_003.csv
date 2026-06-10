@@ -1,0 +1,5 @@
+filename,event_class,start_time,end_time
+mix_003.wav,normal,0.0,2.5
+mix_003.wav,impeller_damage,2.5,5.5
+mix_003.wav,normal,5.5,7.5
+mix_003.wav,cavitation,7.5,10.0

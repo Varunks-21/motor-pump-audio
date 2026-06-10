@@ -1,0 +1,78 @@
+{
+  "filename": "mix_002.wav",
+  "duration": 10.0,
+  "predicted_events": [
+    {
+      "event_class": "motor_off",
+      "start_time": 0.006,
+      "end_time": 1.991
+    },
+    {
+      "event_class": "normal",
+      "start_time": 2.001,
+      "end_time": 5.0
+    },
+    {
+      "event_class": "pipe_leak",
+      "start_time": 5.0,
+      "end_time": 8.0
+    },
+    {
+      "event_class": "normal",
+      "start_time": 8.001,
+      "end_time": 10.0
+    }
+  ],
+  "dominant_timeline": [
+    {
+      "event_class": "motor_off",
+      "start_time": 0.0,
+      "end_time": 2.0
+    },
+    {
+      "event_class": "normal",
+      "start_time": 2.0,
+      "end_time": 5.0
+    },
+    {
+      "event_class": "pipe_leak",
+      "start_time": 5.0,
+      "end_time": 8.0
+    },
+    {
+      "event_class": "normal",
+      "start_time": 8.0,
+      "end_time": 10.0
+    }
+  ],
+  "ae_score": 0.315656,
+  "ae_threshold": 0.12608,
+  "ae_flag": true,
+  "ground_truth": [
+    {
+      "event_class": "motor_off",
+      "start_time": 0.0,
+      "end_time": 2.0
+    },
+    {
+      "event_class": "normal",
+      "start_time": 2.0,
+      "end_time": 5.0
+    },
+    {
+      "event_class": "pipe_leak",
+      "start_time": 5.0,
+      "end_time": 8.0
+    },
+    {
+      "event_class": "normal",
+      "start_time": 8.0,
+      "end_time": 10.0
+    }
+  ],
+  "metrics": {
+    "frame_accuracy": 1.0,
+    "anomaly_accuracy": 1.0,
+    "n_points": 100
+  }
+}
