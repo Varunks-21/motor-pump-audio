@@ -2,27 +2,6 @@
 live_app.py
 ===========
 Real-time motor-pump monitoring web app.
-
-Captures the laptop microphone with sounddevice, runs YOHO + the autoencoder on a
-rolling window roughly once per second, and pushes results to the browser over
-Socket.IO: current class, confidence, traffic-light status, anomaly warning, and a
-live mel spectrogram. Every prediction is logged to SQLite (data/history.db) and is
-searchable by time range.
-
-Classification logic (priority order)
---------------------------------------
-1. Energy gate: if the RMS of the raw waveform is below SILENCE_RMS_THRESHOLD,
-   the result is immediately set to "motor_off" -- no model inference needed.
-2. YOHO predicts the dominant class. If confidence >= LOW_CONF_THRESHOLD and the
-   autoencoder score is within the trained threshold, the YOHO class is returned.
-3. If the autoencoder score EXCEEDS the threshold AND YOHO confidence is LOW
-   (the model has no strong match), the result is "unknown_sound".
-4. If the autoencoder flags an anomaly but YOHO is confident, the AE vote overrides
-   the status to RED (known fault confirmed by two independent signals).
-
-Run (after training):
-    python src/live_app.py
-    open http://127.0.0.1:5000 in your browser
 """
 import os
 import sys
@@ -40,39 +19,30 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 _SRC = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.dirname(_SRC)
 sys.path.insert(0, _ROOT)
 sys.path.insert(0, _SRC)
-import config                              # noqa: E402
-import features as F                       # noqa: E402
-from models import YOHO, ConvAutoencoder  # noqa: E402
+import config
+import features as F
+from models import YOHO, ConvAutoencoder
 
-# ---------------------------------------------------------------------------
-# Live settings
-# ---------------------------------------------------------------------------
-WINDOW_SEC = 2.0            # audio context fed to the model each prediction
-BUFFER_SEC = 3.0            # how much recent audio we keep
-PREDICT_INTERVAL = 1.0      # seconds between predictions
-
-# RMS below this → motor is off (no model inference needed).
-# Calibrate to your microphone: 0.005 works well for a laptop mic at arm's length.
+WINDOW_SEC = 2.0
+BUFFER_SEC = 3.0
+PREDICT_INTERVAL = 1.0
 SILENCE_RMS_THRESHOLD = 0.005
-
-# YOHO confidence below this (mean presence over bins) → high uncertainty
 LOW_CONF = config.LOW_CONF_THRESHOLD
 
 app = Flask(__name__,
             template_folder=os.path.join(_ROOT, "templates"),
             static_folder=os.path.join(_ROOT, "static"))
 app.config["SECRET_KEY"] = "motor-pump-phase1"
-socketio = SocketIO(app, async_mode="gevent", cors_allowed_origins="*")
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1)
+socketio = SocketIO(app, async_mode="threading", cors_allowed_origins="*")
 
 
-# ---------------------------------------------------------------------------
-# Shared state
-# ---------------------------------------------------------------------------
 class State:
     def __init__(self):
         self.buffer = np.zeros(0, dtype=np.float32)
@@ -92,13 +62,11 @@ S = State()
 
 
 def load_models():
-    """Load models + run config; tolerate absence so the UI still serves."""
     try:
         if not (os.path.exists(config.RUN_CONFIG_PATH)
                 and os.path.exists(config.YOHO_MODEL_PATH)
                 and os.path.exists(config.AE_MODEL_PATH)):
-            print("WARNING: trained model artifacts not found - run src/train.py. "
-                  "UI will load but detection is disabled.")
+            print("WARNING: trained model artifacts not found.")
             return
         with open(config.RUN_CONFIG_PATH) as f:
             cfg = json.load(f)
@@ -113,13 +81,10 @@ def load_models():
         S.ae.eval()
         S.models_ready = True
         print("Models loaded. Detection enabled.")
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         print(f"WARNING: failed to load models ({e}). Detection disabled.")
 
 
-# ---------------------------------------------------------------------------
-# Database
-# ---------------------------------------------------------------------------
 def db_conn():
     return sqlite3.connect(config.HISTORY_DB, check_same_thread=False)
 
@@ -161,10 +126,7 @@ def db_query(start_epoch, end_epoch, limit=500):
         return [dict(zip(cols, r)) for r in cur.fetchall()]
 
 
-# ---------------------------------------------------------------------------
-# Audio capture + inference
-# ---------------------------------------------------------------------------
-def audio_callback(indata, frames, time_info, status):  # noqa: ARG001
+def audio_callback(indata, frames, time_info, status):
     chunk = np.asarray(indata[:, 0], dtype=np.float32)
     with S.lock:
         S.buffer = np.concatenate([S.buffer, chunk])
@@ -174,7 +136,6 @@ def audio_callback(indata, frames, time_info, status):  # noqa: ARG001
 
 
 def render_spectrogram_png(mel_db):
-    """Small mel spectrogram as a base64 PNG (no axes) for the live display."""
     fig = plt.figure(figsize=(5.0, 1.7), dpi=80)
     ax = fig.add_axes([0, 0, 1, 1])
     ax.axis("off")
@@ -186,51 +147,29 @@ def render_spectrogram_png(mel_db):
 
 
 def process_window(win):
-    """
-    Run inference on a waveform window and return a prediction payload.
-
-    Decision logic:
-      1. RMS gate → motor_off  (no model needed)
-      2. YOHO → dominant class + confidence
-      3. Autoencoder → anomaly score
-      4. If AE score > threshold AND YOHO confidence is low → unknown_sound
-      5. If AE score > threshold AND YOHO confidence is high → keep YOHO class
-         but force status to red (confirmed fault)
-    """
-    # --- Step 1: energy gate ---
     rms = float(np.sqrt(np.mean(win ** 2)))
     if rms < SILENCE_RMS_THRESHOLD:
         cls = "motor_off"
         confidence = 1.0
         ae_score = 0.0
-        ae_flag = False
         status = "yellow"
         anomaly = False
     else:
-        # --- Step 2: feature extraction ---
         raw = F.logmel(win)
         feat = F.normalize(raw, S.mean, S.std)
-
-        # --- Step 3: YOHO prediction ---
-        pred = S.yoho.predict(feat)                       # (N_BINS, C, 3)
-        presence = pred[:, :, 0].mean(axis=0)             # mean presence per class
+        pred = S.yoho.predict(feat)
+        presence = pred[:, :, 0].mean(axis=0)
         cls_idx = int(np.argmax(presence))
         cls = config.IDX_TO_CLASS[cls_idx]
         confidence = float(presence[cls_idx])
-
-        # --- Step 4: autoencoder anomaly score ---
         ae_score = float(S.ae.anomaly_score(feat))
         ae_flag = ae_score > S.ae_thr
-
-        # --- Step 5: decision tree ---
         if ae_flag and confidence < LOW_CONF:
-            # Model is uncertain AND the AE says it's anomalous → unknown
             cls = config.UNKNOWN_CLASS
             confidence = 0.0
             status = "red"
             anomaly = True
         elif ae_flag:
-            # AE confirms an anomaly even though YOHO has a match
             status = "red"
             anomaly = True
         else:
@@ -254,7 +193,6 @@ def process_window(win):
         "end_time": now.strftime("%H:%M:%S"),
         "duration": round(WINDOW_SEC, 2),
     }
-    # Add spectrogram only when the motor is running (skip for motor_off)
     if cls != "motor_off":
         raw_for_spec = F.logmel(win)
         payload["spectrogram"] = render_spectrogram_png(raw_for_spec)
@@ -272,7 +210,7 @@ def worker():
             continue
         try:
             payload = process_window(buf[-need:])
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             socketio.emit("error", {"message": f"inference error: {e}"})
             continue
         db_insert(payload)
@@ -300,7 +238,7 @@ def devices():
                for i, d in enumerate(sd.query_devices())
                if d["max_input_channels"] > 0]
         return jsonify({"devices": out})
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return jsonify({"devices": [], "error": str(e)})
 
 
@@ -338,6 +276,61 @@ def history():
 
 
 # ---------------------------------------------------------------------------
+# CLOUD API — POST /predict
+# ---------------------------------------------------------------------------
+@app.route("/predict", methods=["POST"])
+def predict_api():
+    if not S.models_ready:
+        return jsonify({"error": "Models not loaded"}), 503
+
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file. Send as multipart field 'audio'"}), 400
+
+    import tempfile
+    import soundfile as sf
+
+    f = request.files["audio"]
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        tmp_path = tmp.name
+        f.save(tmp_path)
+
+    try:
+        wav, sr = sf.read(tmp_path, dtype="float32")
+        if wav.ndim > 1:
+            wav = wav[:, 0]
+        if sr != config.SAMPLE_RATE:
+            import librosa
+            wav = librosa.resample(wav, orig_sr=sr, target_sr=config.SAMPLE_RATE)
+
+        need = int(WINDOW_SEC * config.SAMPLE_RATE)
+        if len(wav) < need:
+            wav = np.pad(wav, (0, need - len(wav)))
+        win = wav[-need:]
+
+        payload = process_window(win)
+        os.unlink(tmp_path)
+
+        db_insert(payload)
+        socketio.emit("prediction", payload)
+
+        return jsonify({
+            "predicted_class": payload["predicted_class"],
+            "confidence":      payload["confidence"],
+            "status":          payload["status"],
+            "anomaly":         payload["anomaly"],
+            "ae_score":        payload["ae_score"],
+            "ae_threshold":    payload["ae_threshold"],
+            "ts":              payload["ts"],
+        })
+    except Exception as e:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        return jsonify({"error": str(e)}), 500
+
+
+# ---------------------------------------------------------------------------
 # Socket.IO events
 # ---------------------------------------------------------------------------
 @socketio.on("connect")
@@ -367,20 +360,20 @@ def on_start(data=None):
         if not S.worker_running:
             socketio.start_background_task(worker)
         socketio.emit("status", {"listening": True, "models_ready": True})
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         S.listening = False
         socketio.emit("error", {"message": f"Could not open microphone: {e}"})
 
 
 @socketio.on("stop")
-def on_stop(data=None):  # noqa: ARG001
+def on_stop(data=None):
     S.listening = False
     try:
         if S.stream is not None:
             S.stream.stop()
             S.stream.close()
             S.stream = None
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
     socketio.emit("status", {"listening": False, "models_ready": S.models_ready})
 
@@ -392,67 +385,3 @@ if __name__ == "__main__":
     print(f"Open http://0.0.0.0:{port} in your browser.")
     socketio.run(app, host="0.0.0.0", port=port,
                  debug=False, allow_unsafe_werkzeug=True)
-
-
-# ---------------------------------------------------------------------------
-# CLOUD API — POST /predict
-# ---------------------------------------------------------------------------
-# Accepts a WAV file from any remote device and returns the fault prediction.
-# The remote device sends:
-#   curl -X POST http://<your-railway-url>/predict -F "audio=@chunk.wav"
-# Response JSON:
-#   {"predicted_class": "bearing_fault", "confidence": 0.87,
-#    "status": "red", "anomaly": true, "ae_score": 0.031}
-# ---------------------------------------------------------------------------
-@app.route("/predict", methods=["POST"])
-def predict_api():
-    if not S.models_ready:
-        return jsonify({"error": "Models not loaded"}), 503
-
-    if "audio" not in request.files:
-        return jsonify({"error": "No audio file. Send as multipart field 'audio'"}), 400
-
-    import tempfile, soundfile as sf
-
-    f = request.files["audio"]
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-        tmp_path = tmp.name
-        f.save(tmp_path)
-
-    try:
-        wav, sr = sf.read(tmp_path, dtype="float32")
-        if wav.ndim > 1:
-            wav = wav[:, 0]                          # stereo → mono
-        if sr != config.SAMPLE_RATE:
-            import librosa
-            wav = librosa.resample(wav, orig_sr=sr, target_sr=config.SAMPLE_RATE)
-
-        need = int(WINDOW_SEC * config.SAMPLE_RATE)
-        if len(wav) < need:
-            # pad if clip is shorter than WINDOW_SEC
-            wav = np.pad(wav, (0, need - len(wav)))
-        win = wav[-need:]                            # take last WINDOW_SEC seconds
-
-        payload = process_window(win)
-        os.unlink(tmp_path)
-
-        # Save to DB + push to all open browser dashboards in real time
-        db_insert(payload)
-        socketio.emit("prediction", payload)
-
-        # Return only the fields relevant to the API caller
-        return jsonify({
-            "predicted_class": payload["predicted_class"],
-            "confidence":       payload["confidence"],
-            "status":           payload["status"],
-            "anomaly":          payload["anomaly"],
-            "ae_score":         payload["ae_score"],
-            "ae_threshold":     payload["ae_threshold"],
-            "ts":               payload["ts"],
-        })
-    except Exception as e:
-        try:
-            os.unlink(tmp_path)
-        except OSError:
-            pass
-        return jsonify({"error": str(e)}), 500
